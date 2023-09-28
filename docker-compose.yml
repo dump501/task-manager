@@ -1,0 +1,48 @@
+version: '1'
+
+services:
+  frontend:
+    build: ./task-manager-frontend
+    container_name: frontend
+    ports:
+      - "5173:5173"
+    stdin_open: true
+    tty: true
+    environment:
+      - BACKEND_URL=$BACKEND_URL
+    depends_on:
+      - backend
+    networks:
+      - task-manager
+  backend:
+    build: ./task-manager-backend
+    container_name: backend
+    ports:
+      - "8080:8080"
+    stdin_open: true
+    tty: true
+    env_file:
+      - ./.env
+    depends_on:
+      - database
+    networks:
+      - task-manager
+
+  database:
+    image: mysql
+    restart: unless-stopped
+    container_name: mysql
+    env_file: ./.env
+    ports:
+      - "3306:3306"
+    volumes:
+      - "./mysql-dump:/docker-entrypoint-initdb.d"
+    environment:
+      - MYSQL_DATABASE=$DATABASE_NAME
+      - MYSQL_ALLOW_EMPTY_PASSWORD=1
+    networks:
+      - task-manager
+
+networks:
+  task-manager:
+    driver: bridge
